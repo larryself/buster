@@ -30,7 +30,24 @@ function resetCaptcha() {
   });
 }
 
-function syncUI() {
+function reFrame() {
+  const iframe = document.querySelector("iframe[src*='recaptcha/api2']")
+  if(iframe){
+    iframe.style.width ='0'
+    iframe.style.height ='0'
+    iframe.style.overflow ='hidden'
+  }
+}
+function Observer(iframe) {
+  const observerIframe = new MutationObserver(reFrame);
+  observerIframe.observe(iframe, {
+    childList: true,
+    subtree: true
+  });
+}
+async function syncUI() {
+  debugger
+
   if (isBlocked()) {
     if (!document.querySelector('.solver-controls')) {
       const div = document.createElement('div');
@@ -49,9 +66,42 @@ function syncUI() {
     }
     return;
   }
+  const iframe = document.querySelector("iframe[src*='recaptcha/api2']")
+
+  if(iframe){
+    Observer(iframe)
+debugger
+    const frameElement = iframe.contentWindow.document.getElementById('recaptcha-token')
+    frameElement.click()
+let newFrame = document.querySelector('iframe[src*="recaptcha/api2/bframe"]').parentElement
+    debugger
+    while(!newFrame){
+
+    }
+    newFrame.style.width ='0'
+    newFrame.style.height ='0'
+    newFrame.style.overflow ='hidden'
+    console.log(document.parentElement);
+    if(!solverButton) {
+      // solverButton = document.createElement('button');
+      // solverButton.setAttribute('tabindex', '0');
+      // solverButton.setAttribute('title', getText('buttonLabel_solve'));
+      // solverButton.id = 'solver-button';
+      // solverButton.classList.add('solver')
+      // console.log(iframe.parentElement)
+      // const inner = iframe.parentElement?.parentElement
+      //
+      // inner.height = 'auto'
+      // inner.append(solverButton)
+
+    }
+    console.log(iframe)
+  }
 
   const helpButton = document.querySelector('#recaptcha-help-button');
   if (helpButton) {
+    console.log(helpButton,  document.querySelector("iframe"))
+    debugger
     helpButton.remove();
 
     const helpButtonHolder = document.querySelector('.help-button-holder');
@@ -349,13 +399,13 @@ async function solve(simulateUserInput, clickEvent) {
 
   const audioUrl = audioEl.src;
   const lang = document.documentElement.lang;
-
+debugger
   const solution = await browser.runtime.sendMessage({
     id: 'transcribeAudio',
     audioUrl,
     lang
   });
-
+  console.log(solution);
   if (!solution) {
     return;
   }
@@ -499,7 +549,6 @@ function init() {
     subtree: true
   });
 
-  syncUI();
 }
 
 init();

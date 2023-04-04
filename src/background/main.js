@@ -261,7 +261,7 @@ async function loadSecrets() {
 
     const key = sha256(
       (await (await fetch('/src/background/script.js')).text()) +
-        (await (await fetch('/src/solve/script.js')).text())
+      (await (await fetch('/src/solve/script.js')).text())
     ).toString();
 
     secrets = JSON.parse(aes.decrypt(ciphertext, key).toString(utf8));
@@ -386,6 +386,34 @@ async function getIbmSpeechApiResult(apiUrl, apiKey, audioContent, model) {
   if (results && results.length) {
     return results[0].alternatives[0].transcript.trim();
   }
+}
+
+async function getCustomHTTPApiResult(
+  customHTTPApiUrl,
+  language,
+  customHTTPApiKey,
+  audioContent
+) {
+  const rsp = await fetch(
+    customHTTPApiUrl,
+    {
+      referrer: '',
+      mode: 'cors',
+      method: 'POST',
+      headers: {
+        'Content-type': 'audio/wav; codec=audio/pcm; samplerate=16000',
+        'Lang': language,
+        'ApiKey': customHTTPApiKey
+      },
+      body: new Blob([audioContent], {type: 'audio/wav'})
+    }
+  );
+
+  if (rsp.status !== 200) {
+    throw new Error(`API response: ${rsp.status}, ${await rsp.text()}`);
+  }
+
+  return await rsp.text()
 }
 
 async function getMicrosoftSpeechApiResult(
@@ -542,6 +570,28 @@ async function transcribeAudio(audioUrl, lang) {
         'en-US'
       );
     }
+  } else if (speechService === 'customHTTPApi') {
+    const {
+      customHTTPApiUrl: customHTTPApiUrl,
+      customHTTPApiKey: customHTTPApiKey,
+    } = await storage.get(
+      ['customHTTPApiUrl', 'customHTTPApiKey']
+    );
+    if (!customHTTPApiUrl) {
+      showNotification({messageId: 'error_missingApiUrl'});
+      return;
+    }
+    if (!customHTTPApiKey) {
+      showNotification({messageId: 'error_missingApiKey'});
+      return;
+    }
+
+    solution = await getCustomHTTPApiResult(
+      customHTTPApiUrl,
+      lang,
+      customHTTPApiKey,
+      audioContent
+    );
   }
 
   if (!solution) {

@@ -192,7 +192,6 @@ export default {
 
   created: async function () {
     this.browser = (await browser.runtime.sendMessage({id: 'getBrowser'})).name;
-
     await this.setLocation();
 
     if (!this.$env.isWindows) {
